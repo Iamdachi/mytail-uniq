@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "util.h"
 #define MAX_NLINES_ON_STACK 10000
 
 void print_last_n(FILE *fp, int n)
