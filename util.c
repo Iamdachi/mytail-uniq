@@ -1,20 +1,38 @@
 #include <stdio.h>
+#include <assert.h>
 #include <string.h>
 #include "util.h"
 
-char *read_line(FILE *file_pointer) {
-    if (feof(file_pointer) || file_pointer == NULL) return NULL;
-	
-    size_t buffer_size = 32 * sizeof(char);
-    char *buffer = (char *)malloc(buffer_size);
+char *read_line(FILE *fp) {
+    size_t current_size = 32;
+    char * line = NULL;
+    while(1) {
+	line = realloc(line, current_size);
 
-    fgets(buffer, buffer_size, file_pointer);
+	// file has ended
+	if(ungetc(getc(fp), fp) == EOF) {
+	    free(line);
+	    return NULL;
+	}
 
-    while(buffer[strlen(buffer) - 1] != '\n') {
-        buffer_size = buffer_size * 2;
-	buffer = (char *)realloc(buffer, buffer_size);
-        fgets(buffer, buffer_size, file_pointer);
+	// read into allocated
+	fgets(line, current_size, fp);
+
+        // is there an end of line on out string?
+        char * point = strstr(line, "\n");
+        
+	if (point) {
+	    // if end of line, make it into end of string.
+	    *point = '\0';
+	    return line;
+	}else {
+	    // end of line not contained, but it is end of file
+	    if (ungetc(getc(fp), fp) == EOF) {
+	        return line;
+	    } else {
+		assert(fseek(fp, 1-current_size, SEEK_CUR) == 0); // fgets advanced fp with current size - 1, we need to step back by (current size - 1) 
+		current_size *= 2;
+	    }
+	}
     }
-
-    return buffer;
 }
